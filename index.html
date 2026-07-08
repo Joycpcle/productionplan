@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Production Forecast · Pâtisserie CLÉ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAFAF8;--surface:#FFFFFF;--surface2:#F5F4F1;
+  --text:#1A1A18;--text2:#6B6B67;--text3:#A8A8A4;
+  --border:#E5E4E0;--border2:#D0CFC9;
+  --accent:#2D5A3D;--accent-bg:#EEF4F0;
+  --amber:#854F0B;--amber-bg:#FAEEDA;
+  --radius:8px;--font:'Inter',system-ui,sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;min-height:100vh}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:10}
+.logo{font-size:15px;font-weight:500;color:var(--text)}
+.logo span{color:var(--accent);font-weight:400}
+.header-right{display:flex;align-items:center;gap:10px}
+.last-updated{font-size:12px;color:var(--text3)}
+main{max-width:1200px;margin:0 auto;padding:24px 20px}
+.page-sub{font-size:13px;color:var(--text2);margin-bottom:20px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.stat-label{font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em}
+.stat-num{font-size:24px;font-weight:500;color:var(--text)}
+.stat-num.sm{font-size:15px;padding-top:5px}
+.controls{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+select,button{font-family:var(--font);font-size:13px;cursor:pointer}
+select{padding:7px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--surface);color:var(--text);outline:none}
+select:focus{border-color:var(--accent)}
+.btn{padding:7px 14px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--surface);color:var(--text);display:inline-flex;align-items:center;gap:6px;transition:background 0.15s}
+.btn:hover{background:var(--surface2)}
+.view-toggle{display:flex;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden}
+.view-btn{font-size:12px;padding:7px 14px;border:none;background:var(--surface);color:var(--text2);cursor:pointer;font-family:var(--font);transition:all 0.15s}
+.view-btn.active{background:var(--surface2);color:var(--text);font-weight:500}
+.warn{background:var(--amber-bg);border:1px solid #E8C585;border-radius:var(--radius);padding:10px 14px;font-size:13px;color:var(--amber);margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tbl-wrap{overflow:auto;max-height:70vh;border:1px solid var(--border);border-radius:var(--radius)}
+table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;font-size:13px}
+th{background:var(--surface2);font-size:11px;font-weight:500;color:var(--text2);padding:8px 10px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:2}
+th.left{text-align:left}
+td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;text-align:center;overflow:hidden;text-overflow:ellipsis}
+td.left{text-align:left}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#FAFAF8}
+.cat-row td{font-size:10px;font-weight:500;letter-spacing:0.06em;padding:5px 10px;text-transform:uppercase}
+.cell-val{font-weight:500}
+.cell-zero{color:var(--text3)}
+.cell-high{color:var(--amber);font-weight:500}
+.total-row td{border-top:2px solid var(--border2);font-weight:500;background:var(--surface2)}
+.total-col{background:var(--surface2);font-weight:500}
+.bar-wrap{display:flex;align-items:center;gap:6px}
+.bar-bg{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;min-width:20px}
+.bar-fill{height:100%;border-radius:2px;background:var(--accent)}
+.no-data{text-align:center;padding:48px 20px;color:var(--text2)}
+.no-data-icon{font-size:32px;margin-bottom:12px;opacity:0.3}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--text2);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.date-day{font-size:12px;font-weight:500}
+.today-th{background:#EEF4F0 !important}
+.today-td{background:#F5FAF7}
+.pill{display:inline-flex;align-items:center;font-size:11px;padding:2px 8px;border-radius:99px;font-weight:500}
+.col-product{position:sticky;left:0;z-index:4;background:var(--surface2);min-width:150px;max-width:150px;width:150px}
+.col-size{position:sticky;left:150px;z-index:4;background:var(--surface2);min-width:80px;max-width:80px;width:80px;border-right:2px solid var(--border2)}
+tbody .col-product{z-index:1 !important;background:var(--surface)}
+tbody .col-size{z-index:1 !important;background:var(--surface)}
+tbody tr:hover .col-product,tbody tr:hover .col-size{background:#FAFAF8}
+.cat-row .col-product,.cat-row .col-size{background:inherit}
+.total-row .col-product,.total-row .col-size{background:var(--surface2)}
+@media(max-width:768px){
+  main{padding:12px 8px}
+  .stat{padding:12px 14px}
+  .stat-num{font-size:28px}
+  .stat-num.sm{font-size:16px}
+  .tbl-wrap{max-height:75vh;border-radius:6px}
+  table{font-size:14px}
+  th{padding:10px 8px;font-size:11px}
+  td{padding:11px 8px}
+  .col-product{min-width:120px;max-width:120px;width:120px;font-size:12px}
+  .col-size{left:120px;min-width:60px;max-width:60px;width:60px;font-size:11px}
+  .date-day{font-size:11px}
+  .cell-val{font-size:15px;font-weight:500}
+  .cell-high{font-size:15px}
+  .cell-zero{font-size:13px}
+  .bar-bg{display:none}
+  .total-col span{font-size:15px;font-weight:500;min-width:auto}
+  .cat-row td{font-size:10px;padding:5px 8px}
+  .controls{gap:6px}
+  .controls select{font-size:12px;padding:6px 8px}
+  .view-btn{font-size:11px;padding:6px 10px}
+  header{padding:0 14px;height:50px}
+  .logo{font-size:14px}
+  .last-updated{display:none}
+  .page-sub{font-size:12px;margin-bottom:14px}
+}
+@media(max-width:400px){
+  .col-product{min-width:100px;max-width:100px;width:100px}
+  .col-size{left:100px;min-width:52px;max-width:52px;width:52px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Pâtisserie <span>CLÉ</span> · Production</div>
+  <div class="header-right">
+    <span class="last-updated" id="last-updated"></span>
+    <button class="btn" onclick="loadSheet()" id="refresh-btn">↻ Refresh</button>
+  </div>
+</header>
+
+<main>
+  <div class="page-sub" id="date-range">Loading…</div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Total items (14d)</div><div class="stat-num" id="s-total">—</div></div>
+    <div class="stat"><div class="stat-label">Unique products</div><div class="stat-num" id="s-products">—</div></div>
+    <div class="stat"><div class="stat-label">Busiest day</div><div class="stat-num sm" id="s-busiest">—</div></div>
+    <div class="stat"><div class="stat-label">Peak quantity</div><div class="stat-num" id="s-peak">—</div></div>
+  </div>
+
+  <div id="unmapped-warn" style="display:none" class="warn">
+    ⚠ <span id="unmapped-msg"></span>
+  </div>
+
+  <div class="controls">
+    <select id="filter-cat" onchange="renderForecast()"><option value="">All categories</option></select>
+    <div class="view-toggle">
+      <button class="view-btn active" id="vbtn-grid" onclick="setView('grid')">Day grid</button>
+      <button class="view-btn" id="vbtn-total" onclick="setView('total')">Totals only</button>
+    </div>
+  </div>
+
+  <div id="table-wrap">
+    <div class="no-data"><div class="no-data-icon">⏳</div><span class="spinner"></span>Connecting to your sheet…</div>
+  </div>
+</main>
+
+<script>
+const API='https://script.google.com/macros/s/AKfycbw-skT8FL53nqrU0qcsDmHtKzfp8PWYJJQMWCuHuxgea115t_VQuncCYO3X0ai0u-Ux/exec';
+let allOrders=[];
+let currentView='grid';
+let categories=['Full Moon','Cakes','Pastries','Eggs','Other'];
+let mappings=[];
+
+const TODAY=new Date();TODAY.setHours(12,0,0,0);
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+function dayKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function fmtShort(d){return d.toLocaleDateString('en-SG',{day:'numeric',month:'short'});}
+function fmtDow(d){return d.toLocaleDateString('en-SG',{weekday:'short'});}
+function parseDate(str){
+  if(!str||String(str).trim()===''||str==='(blank)')return null;
+  const m=String(str).match(/(\d{2})-(\d{2})-(\d{4})/);
+  if(!m)return null;
+  return new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]),12,0,0,0);
+}
+
+const catColors={
+  'Full Moon':['#EEEDFE','#534AB7'],
+  'Cakes':['#E6F1FB','#185FA5'],
+  'Pastries':['#FAEEDA','#854F0B'],
+  'Eggs':['#EAF3DE','#3B6D11'],
+  'Other':['#F1EFE8','#5F5E5A'],
+  'Uncategorised':['#F1EFE8','#5F5E5A'],
+};
+function catStyle(cat){const c=catColors[cat]||['#F1EFE8','#5F5E5A'];return`background:${c[0]};color:${c[1]}`;}
+
+function getCat(name){
+  const m=mappings.find(m=>m.product.toLowerCase()===name.toLowerCase());
+  return m?m.category:'Uncategorised';
+}
+
+function loadMappingsFromSheet(data){
+  const rows=data['Mappings'];
+  if(!rows||rows.length<2)return;
+  mappings=[];
+  categories=['Full Moon','Cakes','Pastries','Eggs','Other'];
+  for(let i=1;i<rows.length;i++){
+    const product=String(rows[i][0]||'').trim();
+    const category=String(rows[i][1]||'').trim();
+    if(product&&category){
+      mappings.push({product,category});
+      if(!categories.includes(category))categories.push(category);
+    }
+  }
+}
+
+function processData(data){
+  loadMappingsFromSheet(data);
+  allOrders=[];
+  const process=(rows,source)=>{
+    if(!rows||rows.length<2)return;
+    for(let i=1;i<rows.length;i++){
+      const cols=rows[i];
+      if(!cols||cols.length<2)continue;
+      const rawDate=String(cols[5]||cols[0]||'');
+      const d=parseDate(rawDate);
+      if(!d)continue;
+      const diff=Math.floor((d-TODAY)/86400000);
+      if(diff<0||diff>13)continue;
+      const product=String(cols[1]||'').trim();
+      const size=String(cols[2]||'').trim();
+      const qty=parseInt(cols[3])||1;
+      if(!product||product==='product'||product==='(blank)')continue;
+      allOrders.push({date:dayKey(d),product,size:size==='(blank)'?'':size,qty,source,category:getCat(product)});
+    }
+  };
+  process(data['Sheet1'],'Shopify');
+  process(data['Manual Orders'],'Manual');
+  populateCatFilter();
+  renderForecast();
+}
+
+async function loadSheet(){
+  const btn=document.getElementById('refresh-btn');
+  btn.textContent='Loading…';btn.disabled=true;
+  if(!allOrders.length)document.getElementById('table-wrap').innerHTML='<div class="no-data"><span class="spinner"></span>Fetching latest orders…</div>';
+  try{
+    const resp=await fetch(API);
+    const data=await resp.json();
+    const now=new Date();
+    document.getElementById('last-updated').textContent='Updated '+now.toLocaleTimeString('en-SG',{hour:'2-digit',minute:'2-digit'});
+    processData(data);
+  }catch(e){
+    document.getElementById('table-wrap').innerHTML=`<div class="no-data"><div class="no-data-icon">⚠️</div>Couldn't load sheet.<br><span style="font-size:12px;color:#888;margin-top:6px;display:block">${e.message}</span></div>`;
+  }
+  btn.textContent='↻ Refresh';btn.disabled=false;
+}
+
+function populateCatFilter(){
+  const cats=[...new Set(allOrders.map(o=>o.category))].sort();
+  const sel=document.getElementById('filter-cat');
+  const prev=sel.value;
+  sel.innerHTML='<option value="">All categories</option>';
+  cats.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;if(c===prev)o.selected=true;sel.appendChild(o);});
+}
+
+function setView(v){
+  currentView=v;
+  document.getElementById('vbtn-grid').className='view-btn'+(v==='grid'?' active':'');
+  document.getElementById('vbtn-total').className='view-btn'+(v==='total'?' active':'');
+  renderForecast();
+}
+
+function renderForecast(){
+  const catF=document.getElementById('filter-cat').value;
+  const todayKey=dayKey(TODAY);
+  const dateKeys=[];
+  for(let d=0;d<14;d++)dateKeys.push(dayKey(addDays(TODAY,d)));
+  document.getElementById('date-range').textContent=`${fmtShort(TODAY)} – ${fmtShort(addDays(TODAY,13))}`;
+
+  const orders=allOrders.filter(o=>dateKeys.includes(o.date)&&(!catF||o.category===catF));
+  const unmapped=[...new Set(allOrders.filter(o=>o.category==='Uncategorised').map(o=>o.product))];
+  const warn=document.getElementById('unmapped-warn');
+  if(unmapped.length){
+    warn.style.display='flex';
+    document.getElementById('unmapped-msg').textContent=`${unmapped.length} product${unmapped.length>1?'s':''} not mapped: ${unmapped.slice(0,3).join(', ')}${unmapped.length>3?'…':''}. Add to the Mappings tab in Google Sheets.`;
+  } else warn.style.display='none';
+
+  const dayTotals={};dateKeys.forEach(k=>dayTotals[k]=0);
+  orders.forEach(o=>dayTotals[o.date]=(dayTotals[o.date]||0)+o.qty);
+  const maxDay=Math.max(...Object.values(dayTotals),1);
+  const grandTotal=orders.reduce((s,o)=>s+o.qty,0);
+  const busiestEntry=Object.entries(dayTotals).sort((a,b)=>b[1]-a[1])[0];
+  const busiestDate=busiestEntry?new Date(busiestEntry[0]+'T12:00:00'):null;
+
+  document.getElementById('s-total').textContent=grandTotal||'0';
+  document.getElementById('s-products').textContent=[...new Set(orders.map(o=>o.product+'||'+o.size))].length||'0';
+  document.getElementById('s-busiest').textContent=busiestDate?fmtShort(busiestDate)+' ('+fmtDow(busiestDate)+')':'—';
+  document.getElementById('s-peak').textContent=busiestEntry?busiestEntry[1]:'—';
+
+  if(!orders.length){
+    document.getElementById('table-wrap').innerHTML='<div class="no-data"><div class="no-data-icon">📅</div>No orders in the next 14 days.</div>';
+    return;
+  }
+
+  const productMap={};
+  orders.forEach(o=>{
+    const key=o.product+'||'+o.size+'||'+o.category;
+    if(!productMap[key])productMap[key]={product:o.product,size:o.size,category:o.category,days:{},total:0,order:mappings.findIndex(m=>m.product.toLowerCase()===o.product.toLowerCase())};
+    productMap[key].days[o.date]=(productMap[key].days[o.date]||0)+o.qty;
+    productMap[key].total+=o.qty;
+  });
+
+  const catOrder=categories.reduce((acc,c,i)=>{acc[c]=i;return acc;},{});
+  const rows=Object.values(productMap).sort((a,b)=>{
+    const ca=catOrder[a.category]??99,cb=catOrder[b.category]??99;
+    if(ca!==cb)return ca-cb;
+    const oa=a.order===-1?999:a.order,ob=b.order===-1?999:b.order;
+    if(oa!==ob)return oa-ob;
+    return (a.size||'').localeCompare(b.size||'');
+  });
+  const maxItem=Math.max(...rows.map(r=>r.total),1);
+
+  if(currentView==='grid'){
+    let html=`<div class="tbl-wrap"><table><thead><tr>
+      <th class="left col-product">Product</th>
+      <th class="col-size">Size</th>
+      <th style="width:70px" class="total-col">Total</th>`;
+    dateKeys.forEach(k=>{
+      const d=new Date(k+'T12:00:00');
+      const isToday=k===todayKey;
+      html+=`<th style="width:40px${isToday?';background:#EEF4F0':''}">
+        <span class="date-day">${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</span>
+      </th>`;
+    });
+    html+=`</tr></thead><tbody>`;
+    let lastCat='';
+    rows.forEach(row=>{
+      if(row.category!==lastCat){
+        lastCat=row.category;
+        const s=catStyle(row.category);
+        const bg=s.match(/background:([^;]+)/)?.[1]||'#F1EFE8';
+        const col=s.match(/color:([^;]+)/)?.[1]||'#444';
+        html+=`<tr class="cat-row"><td colspan="${3+dateKeys.length}" style="background:${bg};color:${col}">${row.category}</td></tr>`;
+      }
+      html+=`<tr>
+        <td class="left col-product" style="font-weight:500;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${row.product}</td>
+        <td class="col-size" style="font-size:11px;color:#6B6B67;text-align:center">${row.size||'—'}</td>
+        <td class="total-col"><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${Math.round(row.total/maxItem*100)}%"></div></div><span style="font-size:13px;font-weight:500;min-width:18px;text-align:right">${row.total}</span></div></td>`;
+      dateKeys.forEach(k=>{
+        const v=row.days[k]||0;
+        const isToday=k===todayKey;
+        const hi=v>0&&dayTotals[k]===maxDay&&maxDay>2;
+        html+=`<td class="${isToday?'today-td':''}"><span class="${v===0?'cell-zero':hi?'cell-high':'cell-val'}">${v===0?'·':v}</span></td>`;
+      });
+      html+=`</tr>`;
+    });
+    html+=`<tr class="total-row">
+      <td class="left col-product" colspan="1" style="font-size:11px;color:#6B6B67;font-weight:500">Daily total</td>
+      <td class="col-size"></td>
+      <td style="font-weight:500">${grandTotal}</td>`;
+    dateKeys.forEach(k=>{
+      const v=dayTotals[k]||0;const isToday=k===todayKey;
+      html+=`<td class="${isToday?'today-td':''}" style="font-weight:500${v===maxDay&&v>0?';color:#854F0B':''}">${v||'·'}</td>`;
+    });
+    html+=`</tr></tbody></table></div>`;
+    document.getElementById('table-wrap').innerHTML=html;
+  } else {
+    let html=`<div class="tbl-wrap"><table><thead><tr>
+      <th class="left" style="width:200px">Product</th>
+      <th style="width:100px">Size</th>
+      <th class="left">Category</th>
+      <th style="width:120px;text-align:right">Total (14d)</th>
+    </tr></thead><tbody>`;
+    let lastCat='';
+    rows.forEach(row=>{
+      if(row.category!==lastCat){
+        lastCat=row.category;
+        const s=catStyle(row.category);
+        const bg=s.match(/background:([^;]+)/)?.[1]||'#F1EFE8';
+        const col=s.match(/color:([^;]+)/)?.[1]||'#444';
+        html+=`<tr class="cat-row"><td colspan="4" style="background:${bg};color:${col}">${row.category}</td></tr>`;
+      }
+      html+=`<tr>
+        <td class="left" style="font-weight:500">${row.product}</td>
+        <td style="font-size:11px;color:#6B6B67">${row.size||'—'}</td>
+        <td class="left"><span class="pill" style="${catStyle(row.category)}">${row.category}</span></td>
+        <td style="text-align:right"><div class="bar-wrap" style="justify-content:flex-end"><div class="bar-bg"><div class="bar-fill" style="width:${Math.round(row.total/maxItem*100)}%"></div></div><span style="font-weight:500;min-width:24px;text-align:right">${row.total}</span></div></td>
+      </tr>`;
+    });
+    html+=`<tr class="total-row">
+      <td class="left" colspan="3" style="font-size:12px;color:#6B6B67;font-weight:500">Grand total</td>
+      <td style="text-align:right;font-size:15px;font-weight:500">${grandTotal}</td>
+    </tr></tbody></table></div>`;
+    document.getElementById('table-wrap').innerHTML=html;
+  }
+}
+
+loadSheet();
+</script>
+</body>
+</html>
